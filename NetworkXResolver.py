@@ -87,7 +87,7 @@ class NetworkXResolver:
 
     @classmethod
     def _create_edges_from_string(cls, string_data):
-        string_data = string_data.split(",")
+        string_data = string_data.split()
         edges = []
         for i in range(0, len(string_data), 4):
             edges.append((string_data[i], string_data[i + 1],
