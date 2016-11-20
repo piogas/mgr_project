@@ -1,6 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import math
+from project.Dijkstra import Dijsktra
 
 __author__ = 'piogas'
 
@@ -42,7 +43,7 @@ class NetworkXResolver:
         nx.draw_networkx_nodes(cls.graph, pos, cmap=plt.get_cmap('jet'), node_color=values, node_size=10)
         edges = cls.share_on_the_type(cls.edges_table)
         cls.draw_edges(cls.graph, pos, edges)
-        #plt.show()
+        # plt.show()
 
     @classmethod
     def upload_data_from_file(cls, edges_file, nodes_file):
@@ -162,8 +163,12 @@ class NetworkXResolver:
     def show_plot(cls):
         x = cls.dict_length_range.keys()
         plt.figure()
-        print cls.dict_length_range.values()
+        # print cls.dict_length_range.values()
         plt.plot(x, cls.dict_length_range.values())
         plt.grid()
         plt.xticks(x, cls.dict_length_range_label, rotation=45)
 
+    @classmethod
+    def get_dijkstra_result(cls):
+        dijkstra = Dijsktra()
+        dijkstra.dijkstra(cls.graph)
