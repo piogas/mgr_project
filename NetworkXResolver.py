@@ -2,6 +2,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import math
 from project.Dijkstra import Dijsktra
+import numpy as np
 
 __author__ = 'piogas'
 
@@ -31,28 +32,28 @@ class NetworkXResolver:
 
     @classmethod
     def draw_graph(cls):
-        string_data = cls.upload_data_from_file(cls.edges_path, cls.nodes_path)
-        cls.edges_table = cls.create_edges_from_string(string_data['string_edges'])
-        cls.nodes_data = cls.create_nodes_from_string(string_data['string_nodes'])
+        string_data = cls._upload_data_from_file(cls.edges_path, cls.nodes_path)
+        cls.edges_table = cls._create_edges_from_string(string_data['string_edges'])
+        cls.nodes_data = cls._create_nodes_from_string(string_data['string_nodes'])
         fixed_nodes = cls.nodes_data.keys()
-        cls.graph = cls.create_graph(cls.edges_table)
+        cls.graph = cls._create_graph(cls.edges_table)
         pos = nx.spring_layout(cls.graph, pos=cls.nodes_data, fixed=fixed_nodes)
         values = []
         for node in cls.graph.nodes():
             values.append(0.25)
         nx.draw_networkx_nodes(cls.graph, pos, cmap=plt.get_cmap('jet'), node_color=values, node_size=10)
-        edges = cls.share_on_the_type(cls.edges_table)
-        cls.draw_edges(cls.graph, pos, edges)
+        edges = cls._share_on_the_type(cls.edges_table)
+        cls._draw_edges(cls.graph, pos, edges)
         # plt.show()
 
     @classmethod
-    def upload_data_from_file(cls, edges_file, nodes_file):
-        string_edges = cls.read_from_file(edges_file)
-        string_nodes = cls.read_from_file(nodes_file)
+    def _upload_data_from_file(cls, edges_file, nodes_file):
+        string_edges = cls._read_from_file(edges_file)
+        string_nodes = cls._read_from_file(nodes_file)
         return {'string_edges': string_edges, 'string_nodes': string_nodes}
 
     @classmethod
-    def share_on_the_type(cls, edges_table):
+    def _share_on_the_type(cls, edges_table):
         blue_edges = []
         red_edges = []
         green_edges = []
@@ -66,52 +67,56 @@ class NetworkXResolver:
         return {'blue_edges': blue_edges, 'red_edges': red_edges, 'green_edges': green_edges}
 
     @classmethod
-    def draw_edges(cls, graph, pos, edges):
+    def _draw_edges(cls, graph, pos, edges):
         nx.draw_networkx_edges(graph, pos, edgelist=edges['red_edges'], edge_color='r', arrows=False)
         nx.draw_networkx_edges(graph, pos, edgelist=edges['green_edges'], edge_color='g', arrows=False)
         nx.draw_networkx_edges(graph, pos, edgelist=edges['blue_edges'], edge_color='b', arrows=False)
 
     @classmethod
-    def read_from_file(cls, uri_to_file):
+    def _read_from_file(cls, uri_to_file):
         with open(uri_to_file) as content_file:
             content = content_file.read()
             content_file.close()
             return content
 
     @classmethod
-    def create_graph(cls, data_to_graph):
+    def _create_graph(cls, data_to_graph):
         new_graph = nx.DiGraph()
         new_graph.add_edges_from(data_to_graph)
         return new_graph
 
     @classmethod
-    def create_edges_from_string(cls, string_data):
-        string_data = string_data.split()
+    def _create_edges_from_string(cls, string_data):
+        string_data = string_data.split(",")
         edges = []
         for i in range(0, len(string_data), 4):
-            edges.append((string_data[i + 1], string_data[i + 2],
-                          {'weight': int(string_data[i + 3]), 'layer': int(string_data[i]), 'length': {}}))
+            edges.append((string_data[i], string_data[i + 1],
+                          {'weight': int(string_data[i + 3]), 'layer': int(string_data[i + 2]), 'length': {}}))
         return edges
 
     @classmethod
-    def create_nodes_from_string(cls, string_data):
-        string_data = string_data.split()
+    def _create_nodes_from_string(cls, string_data):
+        string_data = string_data.split(",")
         nodes = {}
-        for i in range(4, len(string_data), 4):
-            node_data = (float(string_data[i + 3]), float(string_data[i + 2]))
+        for i in range(0, len(string_data), 8):
+            # long lat
+            node_data = (float(string_data[i + 2]), float(string_data[i + 1]))
             nodes[string_data[i]] = node_data
         return nodes
 
     @classmethod
-    def calculate_edge_length(cls, node_1, node_2):
+    def _calculate_edge_length(cls, node_1, node_2):
         lat1 = cls.nodes_data[str(node_1)][0]
         lon1 = cls.nodes_data[str(node_1)][1]
         lat2 = cls.nodes_data[str(node_2)][0]
         lon2 = cls.nodes_data[str(node_2)][1]
-        return cls.get_distance_from_lat_lon_in_km(lat1, lon1, lat2, lon2)
+
+        distance = cls._get_distance_from_lat_lon_in_km(lat1, lon1, lat2, lon2)
+        print cls.graph.edge
+        return distance
 
     @classmethod
-    def get_distance_from_lat_lon_in_km(cls, lat1, lon1, lat2, lon2):
+    def _get_distance_from_lat_lon_in_km(cls, lat1, lon1, lat2, lon2):
         r = 6371
         dlat = math.radians(lat2-lat1)
         dlon = math.radians(lon2-lon1)
@@ -128,11 +133,14 @@ class NetworkXResolver:
             lon1 = cls.nodes_data[str(edge[0])][1]
             lat2 = cls.nodes_data[str(edge[1])][0]
             lon2 = cls.nodes_data[str(edge[1])][1]
-            edge[2]['length'] = cls.get_distance_from_lat_lon_in_km(lat1, lon1, lat2, lon2)
-            cls.assign_to_length_group(edge[2]['length'])
+            distance = cls._get_distance_from_lat_lon_in_km(lat1, lon1, lat2, lon2)
+            edge[2]['length'] = distance
+            cls.graph.edge[edge[0]][edge[1]]['length'] = distance
+            #cls.graph.edge[edge[1]][edge[0]]['length'] = distance
+            cls._assign_to_length_group(distance)
 
     @classmethod
-    def assign_to_length_group(cls, length):
+    def _assign_to_length_group(cls, length):
         length = math.ceil(length*10)/10
         if length <= 0.5:
             cls.dict_length_range[0] += 1
@@ -160,13 +168,32 @@ class NetworkXResolver:
             cls.dict_length_range[11] += 1
 
     @classmethod
-    def show_plot(cls):
+    def show_km_by_quantity_plot(cls):
         x = cls.dict_length_range.keys()
         plt.figure()
         # print cls.dict_length_range.values()
         plt.plot(x, cls.dict_length_range.values())
         plt.grid()
         plt.xticks(x, cls.dict_length_range_label, rotation=45)
+
+    @classmethod
+    def show_km_by_time_plot(cls):
+        length_and_time = np.array(cls._get_all_length_and_time())
+        y = length_and_time[:, 0]
+        x = length_and_time[:, 1]
+        plt.figure()
+        plt.plot(x, y, 'ro')
+        plt.grid()
+        #plt.xticks(x, y, rotation=45)
+
+    @classmethod
+    def _get_all_length_and_time(cls):
+        all_length = []
+        for x in cls.edges_table:
+            all_length.append([x[2]['length'], x[2]['weight']])
+        all_length = sorted(all_length, key=lambda item: item[0])
+        print all_length
+        return all_length
 
     @classmethod
     def get_dijkstra_result(cls):
