@@ -39,12 +39,11 @@ class NetworkXResolver:
         cls.graph = cls._create_graph(cls.edges_table)
         pos = nx.spring_layout(cls.graph, pos=cls.nodes_data, fixed=fixed_nodes)
         values = []
-        for node in cls.graph.nodes():
+        for _ in cls.graph.nodes():
             values.append(0.25)
         nx.draw_networkx_nodes(cls.graph, pos, cmap=plt.get_cmap('jet'), node_color=values, node_size=10)
         edges = cls._share_on_the_type(cls.edges_table)
         cls._draw_edges(cls.graph, pos, edges)
-        # plt.show()
 
     @classmethod
     def _upload_data_from_file(cls, edges_file, nodes_file):
@@ -112,7 +111,6 @@ class NetworkXResolver:
         lon2 = cls.nodes_data[str(node_2)][1]
 
         distance = cls._get_distance_from_lat_lon_in_km(lat1, lon1, lat2, lon2)
-        print cls.graph.edge
         return distance
 
     @classmethod
@@ -136,7 +134,6 @@ class NetworkXResolver:
             distance = cls._get_distance_from_lat_lon_in_km(lat1, lon1, lat2, lon2)
             edge[2]['length'] = distance
             cls.graph.edge[edge[0]][edge[1]]['length'] = distance
-            #cls.graph.edge[edge[1]][edge[0]]['length'] = distance
             cls._assign_to_length_group(distance)
 
     @classmethod
@@ -170,21 +167,28 @@ class NetworkXResolver:
     @classmethod
     def show_km_by_quantity_plot(cls):
         x = cls.dict_length_range.keys()
-        plt.figure()
+        fig = plt.figure()
         # print cls.dict_length_range.values()
         plt.plot(x, cls.dict_length_range.values())
         plt.grid()
-        plt.xticks(x, cls.dict_length_range_label, rotation=45)
+        plt.xticks(x, cls.dict_length_range_label, rotation=30)
+        fig.suptitle('Quantity of edges in length set', fontsize=20)
+        plt.xlabel('Edge length', fontsize=18)
+        plt.ylabel('Number of edge', fontsize=16)
+        fig.savefig('km_quantity.png')
 
     @classmethod
     def show_km_by_time_plot(cls):
         length_and_time = np.array(cls._get_all_length_and_time())
         y = length_and_time[:, 0]
         x = length_and_time[:, 1]
-        plt.figure()
+        fig = plt.figure()
         plt.plot(x, y, 'ro')
         plt.grid()
-        #plt.xticks(x, y, rotation=45)
+        fig.suptitle('Edge length by time travel', fontsize=20)
+        plt.xlabel('Time travel', fontsize=18)
+        plt.ylabel('Edge length', fontsize=16)
+        fig.savefig('km_time.png')
 
     @classmethod
     def _get_all_length_and_time(cls):
