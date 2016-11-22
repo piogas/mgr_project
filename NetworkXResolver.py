@@ -1,7 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import math
-from project.Dijkstra import Dijsktra
+from project.GraphMethod import GraphMethod
 import numpy as np
 
 __author__ = 'piogas'
@@ -16,7 +16,7 @@ class NetworkXResolver:
     # resources/london_transport_nodes.txt
     nodes_path = ''
     graph = nx.Graph()
-    p = {}
+    poly1d = {}
 
     dict_length_range = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0}
     dict_length_range_label = ['0-0.5km', '0.5-1km', '1-1.5km', '1.5-2km', '2-2.5km', '2.5-3km', '3-3.5km', '3.5-4km',
@@ -133,7 +133,7 @@ class NetworkXResolver:
             lon1 = cls.nodes_data[str(edge[0])][1]
             lat2 = cls.nodes_data[str(edge[1])][0]
             lon2 = cls.nodes_data[str(edge[1])][1]
-            distance = cls._get_distance_from_lat_lon_in_km(lat1, lon1, lat2, lon2)
+            distance = GraphMethod._get_distance_from_lat_lon_in_km(lat1, lon1, lat2, lon2)
             edge[2]['length'] = distance
             cls.graph.edge[edge[0]][edge[1]]['length'] = distance
             cls._assign_to_length_group(distance)
@@ -182,28 +182,28 @@ class NetworkXResolver:
     @classmethod
     def show_km_by_time_plot(cls):
         length_and_time = np.array(cls._get_all_length_and_time())
-        y = length_and_time[:, 0]
-        x = length_and_time[:, 1]
+        x = length_and_time[:, 0]
+        y = length_and_time[:, 1]
         fig = plt.figure()
         plt.plot(x, y, 'ro')
         plt.grid()
         fig.suptitle('Edge length by time travel', fontsize=20)
-        plt.xlabel('Time travel', fontsize=18)
-        plt.ylabel('Edge length', fontsize=16)
+        plt.ylabel('Time travel', fontsize=18)
+        plt.xlabel('Edge length', fontsize=16)
 
-        cls._get_approximation_for_plot(x, y)
+        cls._get_approximation_for_graph(x, y)
         fig.savefig('km_time.png')
 
     @classmethod
-    def _get_approximation_for_plot(cls, x, y):
+    def _get_approximation_for_graph(cls, x, y):
         xz = np.array(x)
         yz = np.array(y)
         z = np.polyfit(xz, yz, 3)
-        p = np.poly1d(z)
+        poly1d = np.poly1d(z)
         app_x = []
         app_y = []
-        for i in range(1, 9):
-            app_y.append(p(i))
+        for i in range(0, 13):
+            app_y.append(poly1d(i))
             app_x.append(i)
 
         plt.plot(app_x, app_y, '--')
@@ -214,10 +214,10 @@ class NetworkXResolver:
         for x in cls.edges_table:
             all_length.append([x[2]['length'], x[2]['weight']])
         all_length = sorted(all_length, key=lambda item: item[0])
-        print all_length
         return all_length
 
     @classmethod
     def get_dijkstra_result(cls):
-        dijkstra = Dijsktra()
-        dijkstra.dijkstra(cls.graph)
+        cls.graph.edge
+        graph_method = GraphMethod()
+        graph_method.depth_first_search(cls.graph, cls.nodes_data)
