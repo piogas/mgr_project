@@ -16,6 +16,7 @@ class NetworkXResolver:
     # resources/london_transport_nodes.txt
     nodes_path = ''
     graph = nx.Graph()
+    p = {}
 
     dict_length_range = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0}
     dict_length_range_label = ['0-0.5km', '0.5-1km', '1-1.5km', '1.5-2km', '2-2.5km', '2.5-3km', '3-3.5km', '3.5-4km',
@@ -57,12 +58,13 @@ class NetworkXResolver:
         red_edges = []
         green_edges = []
         for edge in edges_table:
-            if edge[2]['layer'] == 1:
-                green_edges.append(edge)
-            if edge[2]['layer'] == 2:
-                red_edges.append(edge)
-            if edge[2]['layer'] == 3:
+            #if edge[2]['layer'] == 1:
+            #    green_edges.append(edge)
+            #if edge[2]['layer'] == 2:
+            #    red_edges.append(edge)
+            #if edge[2]['layer'] == 3:
                 blue_edges.append(edge)
+
         return {'blue_edges': blue_edges, 'red_edges': red_edges, 'green_edges': green_edges}
 
     @classmethod
@@ -188,7 +190,23 @@ class NetworkXResolver:
         fig.suptitle('Edge length by time travel', fontsize=20)
         plt.xlabel('Time travel', fontsize=18)
         plt.ylabel('Edge length', fontsize=16)
+
+        cls._get_approximation_for_plot(x, y)
         fig.savefig('km_time.png')
+
+    @classmethod
+    def _get_approximation_for_plot(cls, x, y):
+        xz = np.array(x)
+        yz = np.array(y)
+        z = np.polyfit(xz, yz, 3)
+        p = np.poly1d(z)
+        app_x = []
+        app_y = []
+        for i in range(1, 9):
+            app_y.append(p(i))
+            app_x.append(i)
+
+        plt.plot(app_x, app_y, '--')
 
     @classmethod
     def _get_all_length_and_time(cls):
