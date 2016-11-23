@@ -2,6 +2,7 @@ import networkx as nx
 import math
 import copy
 import time
+import xlwt
 
 
 class GraphMethod:
@@ -28,11 +29,17 @@ class GraphMethod:
     @classmethod
     def depth_first_search(cls, G, nodes_data):
         start_time = time.time()
+        result = xlwt.Workbook(encoding="utf-8")
+        sheet1 = result.add_sheet("Results")
+        style1 = xlwt.easyxf(num_format_str='0')
+        style2 = xlwt.easyxf(num_format_str='0.00')
+        sheet1.write(0, 0, "NO")
+        sheet1.write(0, 1, "Node1")
+        sheet1.write(0, 2, "Node1")
+        sheet1.write(0, 3, "Length")
+        sheet1.write(0, 4, "Match!")
 
         shortest = cls.dijkstra(G)
-        new_network_sum = 0
-        new_edge_x = 0
-        new_edge_y = 0
         iterations = 0
 
         print G.edge
@@ -40,20 +47,26 @@ class GraphMethod:
             for j in G.node:
                 if j not in G.neighbors(i):
                     iterations += 1
-                    print iterations
+                    print "Iteration: {} from 90506 --> {} to the end".format(iterations, 90506 - iterations)
                     G_temp = copy.deepcopy(G)
                     dist = cls._calculate_edge_length(i, j, nodes_data)
                     G_temp.add_edge(i, j, weight=dist)
                     G_temp.add_edge(j, i, weight=dist)
                     new_network_sum = cls.dijkstra(G_temp)
+
+                    # save to xls
+                    sheet1.write(iterations, 0, iterations, style1)
+                    sheet1.write(iterations, 1, i, style1)
+                    sheet1.write(iterations, 2, j, style1)
+                    sheet1.write(iterations, 3, new_network_sum, style2)
+
                     if new_network_sum < shortest:
                         shortest = new_network_sum
-                        new_edge_x = i
-                        new_edge_y = j
-
+                        sheet1.write(iterations, 4, "Match!")
                         print "SHORTEST! {} n1: {} n2: {}".format(shortest, i, j)
-        cls.dijkstra(G)
-        print "Iterations: {}".format(iterations)
+
+        result.save("results1.xls")
+        print "Iterations: {} from 90506 --> {} to the end".format(iterations, 90506 - iterations)
 
         print("--- %s seconds ---" % (time.time() - start_time))
 
