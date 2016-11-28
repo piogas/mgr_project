@@ -9,14 +9,13 @@ class GraphMethod:
 
     @classmethod
     def __init__(cls):
-        print 'siema'
+        print 'Init GraphMethod'
 
     @classmethod
     def dijkstra(cls, G):
         sum_all_paths = 0
         for x in G.node:
             sum_all_paths += cls._calculate_paths_sum(nx.single_source_dijkstra_path_length(G, x))
-        # print sum_all_paths
         return sum_all_paths
 
     @classmethod
@@ -53,6 +52,10 @@ class GraphMethod:
                     G_temp.add_edge(i, j, weight=dist)
                     G_temp.add_edge(j, i, weight=dist)
                     new_network_sum = cls.dijkstra(G_temp)
+                    if iterations == 65000:
+                        sheet1 = result.add_sheet("Results_2")
+                        result.save("results1.xls")
+                        iterations -= 65000
 
                     # save to xls
                     sheet1.write(iterations, 0, iterations, style1)
@@ -65,18 +68,18 @@ class GraphMethod:
                         sheet1.write(iterations, 4, "Match!")
                         print "SHORTEST! {} n1: {} n2: {}".format(shortest, i, j)
 
-        result.save("results1.xls")
         print "Iterations: {} from 90506 --> {} to the end".format(iterations, 90506 - iterations)
 
         print("--- %s seconds ---" % (time.time() - start_time))
+        result.save("results1.xls")
 
     @classmethod
-    def _get_distance_from_lat_lon_in_km(cls, lat1, lon1, lat2, lon2):
+    def get_distance_from_lat_lon_in_km(cls, lat1, lon1, lat2, lon2):
         r = 6371
         dlat = math.radians(lat2-lat1)
         dlon = math.radians(lon2-lon1)
         a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * \
-            math.sin(dlon/2) * math.sin(dlon/2)
+                                                  math.sin(dlon/2) * math.sin(dlon/2)
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
         d = r * c
         return math.ceil(d*1000)/1000
@@ -88,6 +91,6 @@ class GraphMethod:
         lat2 = nodes_data[str(node_2)][0]
         lon2 = nodes_data[str(node_2)][1]
 
-        distance = cls._get_distance_from_lat_lon_in_km(lat1, lon1, lat2, lon2)
+        distance = cls.get_distance_from_lat_lon_in_km(lat1, lon1, lat2, lon2)
         return distance
 

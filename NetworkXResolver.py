@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import math
 from project.GraphMethod import GraphMethod
 import numpy as np
+import scipy.stats
+
 
 __author__ = 'piogas'
 
@@ -38,6 +40,7 @@ class NetworkXResolver:
         cls.nodes_data = cls._create_nodes_from_string(string_data['string_nodes'])
         fixed_nodes = cls.nodes_data.keys()
         cls.graph = cls._create_graph(cls.edges_table)
+        cls._set_nodes_levels()
         pos = nx.spring_layout(cls.graph, pos=cls.nodes_data, fixed=fixed_nodes)
         values = []
         for _ in cls.graph.nodes():
@@ -45,6 +48,27 @@ class NetworkXResolver:
         nx.draw_networkx_nodes(cls.graph, pos, cmap=plt.get_cmap('jet'), node_color=values, node_size=10)
         edges = cls._share_on_the_type(cls.edges_table)
         cls._draw_edges(cls.graph, pos, edges)
+        cls._set_edges_levels()
+
+    @classmethod
+    def _set_nodes_levels(cls):
+        for i in cls.graph.node:
+            print i
+            print cls.graph.neighbors(i)
+            print '++++++++++++++++++++'
+            cls.graph.node[i]['popularity'] = len(cls.graph.neighbors(i))
+
+    @classmethod
+    def _set_edges_levels(cls):
+        print cls.graph.node
+        for i in cls.graph.edges():
+            popularity_0 = cls.graph.node[i[0]]['popularity']
+            print popularity_0
+            popularity_1 = cls.graph.node[i[1]]['popularity']
+            print popularity_1
+            popularity = (popularity_0, popularity_1)
+            print scipy.stats.entropy(np.asarray(popularity, dtype=float))
+            print '-------------------------------'
 
     @classmethod
     def _upload_data_from_file(cls, edges_file, nodes_file):
@@ -133,7 +157,7 @@ class NetworkXResolver:
             lon1 = cls.nodes_data[str(edge[0])][1]
             lat2 = cls.nodes_data[str(edge[1])][0]
             lon2 = cls.nodes_data[str(edge[1])][1]
-            distance = GraphMethod._get_distance_from_lat_lon_in_km(lat1, lon1, lat2, lon2)
+            distance = GraphMethod.get_distance_from_lat_lon_in_km(lat1, lon1, lat2, lon2)
             edge[2]['length'] = distance
             cls.graph.edge[edge[0]][edge[1]]['length'] = distance
             cls._assign_to_length_group(distance)
