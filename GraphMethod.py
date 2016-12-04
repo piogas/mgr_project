@@ -3,6 +3,9 @@ import math
 import copy
 import time
 import xlwt
+import scipy.stats
+import numpy as np
+import csv
 
 
 class GraphMethod:
@@ -17,6 +20,34 @@ class GraphMethod:
         for x in G.node:
             sum_all_paths += cls._calculate_paths_sum(nx.single_source_dijkstra_path_length(G, x))
         return sum_all_paths
+
+    @classmethod
+    def find_shortest_path(cls, G, nodes_data):
+        for x in G.node:
+            paths = nx.single_source_dijkstra_path(G, x)
+            for path in paths:
+                path_nodes = []
+                for node in paths[path]:
+                    path_nodes.append(G.node[node]['popularity'])
+                entropy = scipy.stats.entropy(np.asarray(path_nodes, dtype=float))
+                for node in paths[path]:
+                    if 'entropy_sum' not in G.node[node]:
+                        G.node[node]['entropy_sum'] = entropy
+                    else:
+                        G.node[node]['entropy_sum'] += entropy
+                    if 'betweeness' not in G.node[node]:
+                        G.node[node]['betweeness'] = 1
+                    else:
+                        G.node[node]['betweeness'] += 1
+
+        with open('nodes_with_entropy.csv', 'wb') as csvfile:
+            writer = csv.writer(csvfile, delimiter=' ',
+                                quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            writer.writerow(['Node', 'Popularity', 'Entropy_sum', 'Betweeness'])
+            for x in G.node:
+                writer.writerow([x, G.node[x]['popularity'], G.node[x]['entropy_sum'], G.node[x]['betweeness']])
+
+
 
     @classmethod
     def _calculate_paths_sum(cls, tab):
@@ -41,12 +72,12 @@ class GraphMethod:
         shortest = cls.dijkstra(G)
         iterations = 0
 
-        print G.edge
+        #print G.edge
         for i in G.node:
             for j in G.node:
                 if j not in G.neighbors(i):
                     iterations += 1
-                    print "Iteration: {} from 90506 --> {} to the end".format(iterations, 90506 - iterations)
+                    #print "Iteration: {} from 90506 --> {} to the end".format(iterations, 90506 - iterations)
                     G_temp = copy.deepcopy(G)
                     dist = cls._calculate_edge_length(i, j, nodes_data)
                     G_temp.add_edge(i, j, weight=dist)
@@ -66,9 +97,9 @@ class GraphMethod:
                     if new_network_sum < shortest:
                         shortest = new_network_sum
                         sheet1.write(iterations, 4, "Match!")
-                        print "SHORTEST! {} n1: {} n2: {}".format(shortest, i, j)
+                        #print "SHORTEST! {} n1: {} n2: {}".format(shortest, i, j)
 
-        print "Iterations: {} from 90506 --> {} to the end".format(iterations, 90506 - iterations)
+        #print "Iterations: {} from 90506 --> {} to the end".format(iterations, 90506 - iterations)
 
         print("--- %s seconds ---" % (time.time() - start_time))
         result.save("results1.xls")

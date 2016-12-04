@@ -6,6 +6,7 @@ import numpy as np
 import scipy.stats
 
 
+
 __author__ = 'piogas'
 
 
@@ -53,22 +54,15 @@ class NetworkXResolver:
     @classmethod
     def _set_nodes_levels(cls):
         for i in cls.graph.node:
-            print i
-            print cls.graph.neighbors(i)
-            print '++++++++++++++++++++'
             cls.graph.node[i]['popularity'] = len(cls.graph.neighbors(i))
 
     @classmethod
     def _set_edges_levels(cls):
-        print cls.graph.node
         for i in cls.graph.edges():
             popularity_0 = cls.graph.node[i[0]]['popularity']
-            print popularity_0
             popularity_1 = cls.graph.node[i[1]]['popularity']
-            print popularity_1
             popularity = (popularity_0, popularity_1)
-            print scipy.stats.entropy(np.asarray(popularity, dtype=float))
-            print '-------------------------------'
+            scipy.stats.entropy(np.asarray(popularity, dtype=float))
 
     @classmethod
     def _upload_data_from_file(cls, edges_file, nodes_file):
@@ -244,4 +238,5 @@ class NetworkXResolver:
     def get_dijkstra_result(cls):
         cls.graph.edge
         graph_method = GraphMethod()
-        graph_method.depth_first_search(cls.graph, cls.nodes_data)
+        #graph_method.depth_first_search(cls.graph, cls.nodes_data)
+        graph_method.find_shortest_path(cls.graph, cls.nodes_data)
