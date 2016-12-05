@@ -6,23 +6,37 @@ import xlwt
 import scipy.stats
 import numpy as np
 import csv
-
+from multiprocessing import Process, Value, Array
+import multiprocessing
+from concurrent.futures import ProcessPoolExecutor
+import concurrent.futures
 
 class GraphMethod:
+
+    G = {}
+    nodes_data = {}
 
     @classmethod
     def __init__(cls):
         print 'Init GraphMethod'
 
-    @classmethod
-    def dijkstra(cls, G):
+    @staticmethod
+    def dijkstra_weight(G):
         sum_all_paths = 0
         for x in G.node:
-            sum_all_paths += cls._calculate_paths_sum(nx.single_source_dijkstra_path_length(G, x))
+            sum_all_paths += GraphMethod._calculate_paths_sum(nx.single_source_dijkstra_path_length(G, x))
         return sum_all_paths
 
-    @classmethod
-    def find_shortest_path(cls, G, nodes_data):
+    @staticmethod
+    def dijkstra_entropy(G):
+        sum_all_paths = 0
+        for x in G.node:
+            sum_all_paths += GraphMethod._calculate_paths_sum(nx.single_source_dijkstra_path_length(G, x, weight='entropy_sum'))
+        return sum_all_paths
+
+    @staticmethod
+    def find_shortest_path(G):
+        entropy_sum = 0
         for x in G.node:
             paths = nx.single_source_dijkstra_path(G, x)
             for path in paths:
@@ -40,72 +54,47 @@ class GraphMethod:
                     else:
                         G.node[node]['betweeness'] += 1
 
-        with open('nodes_with_entropy.csv', 'wb') as csvfile:
-            writer = csv.writer(csvfile, delimiter=' ',
-                                quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            writer.writerow(['Node', 'Popularity', 'Entropy_sum', 'Betweeness'])
-            for x in G.node:
-                writer.writerow([x, G.node[x]['popularity'], G.node[x]['entropy_sum'], G.node[x]['betweeness']])
+        for x in G.node:
+            entropy_sum += G.node[x]['entropy_sum']
 
+        return entropy_sum
 
+    @staticmethod
+    def set_edges_weight(G, entropy_sum):
+        for i in G.edges():
+            entropy_0 = G.node[i[0]]['entropy_sum']
+            entropy_1 = G.node[i[1]]['entropy_sum']
+            edge_entropy = (entropy_0 + entropy_1)/entropy_sum
+            weight_in_min = G.edge[i[0]][i[1]]['weight']/(1-edge_entropy)
+            G.edge[i[0]][i[1]]['weight'] = weight_in_min
 
-    @classmethod
-    def _calculate_paths_sum(cls, tab):
+    @staticmethod
+    def _calculate_paths_sum(tab):
         paths_sum = 0
         for i in tab:
             paths_sum += tab[i]
         return paths_sum
 
-    @classmethod
-    def depth_first_search(cls, G, nodes_data):
+    @staticmethod
+    def depth_first_search(G, nodes_data):
         start_time = time.time()
-        result = xlwt.Workbook(encoding="utf-8")
-        sheet1 = result.add_sheet("Results")
-        style1 = xlwt.easyxf(num_format_str='0')
-        style2 = xlwt.easyxf(num_format_str='0.00')
-        sheet1.write(0, 0, "NO")
-        sheet1.write(0, 1, "Node1")
-        sheet1.write(0, 2, "Node1")
-        sheet1.write(0, 3, "Length")
-        sheet1.write(0, 4, "Match!")
+        GraphMethod.G = G
+        GraphMethod.nodes_data = nodes_data
+        with open('results_with_entropy.csv', 'wb') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['Node_1', 'Node_2', 'Entropy_sum'])
 
-        shortest = cls.dijkstra(G)
-        iterations = 0
+            nodes = G.node
 
-        #print G.edge
-        for i in G.node:
-            for j in G.node:
-                if j not in G.neighbors(i):
-                    iterations += 1
-                    #print "Iteration: {} from 90506 --> {} to the end".format(iterations, 90506 - iterations)
-                    G_temp = copy.deepcopy(G)
-                    dist = cls._calculate_edge_length(i, j, nodes_data)
-                    G_temp.add_edge(i, j, weight=dist)
-                    G_temp.add_edge(j, i, weight=dist)
-                    new_network_sum = cls.dijkstra(G_temp)
-                    if iterations == 65000:
-                        sheet1 = result.add_sheet("Results_2")
-                        result.save("results1.xls")
-                        iterations -= 65000
+            with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
+                for node in nodes:
+                    executor.submit(calculate, node, GraphMethod.G, GraphMethod.nodes_data)
 
-                    # save to xls
-                    sheet1.write(iterations, 0, iterations, style1)
-                    sheet1.write(iterations, 1, i, style1)
-                    sheet1.write(iterations, 2, j, style1)
-                    sheet1.write(iterations, 3, new_network_sum, style2)
+            print("--- %s seconds ---" % (time.time() - start_time))
 
-                    if new_network_sum < shortest:
-                        shortest = new_network_sum
-                        sheet1.write(iterations, 4, "Match!")
-                        #print "SHORTEST! {} n1: {} n2: {}".format(shortest, i, j)
 
-        #print "Iterations: {} from 90506 --> {} to the end".format(iterations, 90506 - iterations)
-
-        print("--- %s seconds ---" % (time.time() - start_time))
-        result.save("results1.xls")
-
-    @classmethod
-    def get_distance_from_lat_lon_in_km(cls, lat1, lon1, lat2, lon2):
+    @staticmethod
+    def get_distance_from_lat_lon_in_km(lat1, lon1, lat2, lon2):
         r = 6371
         dlat = math.radians(lat2-lat1)
         dlon = math.radians(lon2-lon1)
@@ -115,13 +104,33 @@ class GraphMethod:
         d = r * c
         return math.ceil(d*1000)/1000
 
-    @classmethod
-    def _calculate_edge_length(cls, node_1, node_2, nodes_data):
+    @staticmethod
+    def calculate_edge_length(node_1, node_2, nodes_data):
         lat1 = nodes_data[str(node_1)][0]
         lon1 = nodes_data[str(node_1)][1]
         lat2 = nodes_data[str(node_2)][0]
         lon2 = nodes_data[str(node_2)][1]
 
-        distance = cls.get_distance_from_lat_lon_in_km(lat1, lon1, lat2, lon2)
+        distance = GraphMethod.get_distance_from_lat_lon_in_km(lat1, lon1, lat2, lon2)
         return distance
+
+
+def calculate(i, G, nodes_data):
+    with open('results_with_entropy.csv', 'ab') as csvfile:
+        writer = csv.writer(csvfile)
+        for j in G.node:
+            if j not in G.neighbors(i):
+                G_temp = copy.deepcopy(G)
+                dist = GraphMethod.calculate_edge_length(i, j, nodes_data)
+                G_temp.add_edge(i, j, weight=dist)
+                G_temp.add_edge(j, i, weight=dist)
+                entropy_sum = GraphMethod.find_shortest_path(G_temp)
+                GraphMethod.set_edges_weight(G_temp, entropy_sum)
+                new_network_sum = GraphMethod.dijkstra_weight(G_temp)
+                print new_network_sum
+
+                writer.writerow([i, j, new_network_sum])
+
+                if new_network_sum < shortest:
+                    shortest = new_network_sum
 

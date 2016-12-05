@@ -237,6 +237,5 @@ class NetworkXResolver:
     @classmethod
     def get_dijkstra_result(cls):
         cls.graph.edge
-        graph_method = GraphMethod()
-        #graph_method.depth_first_search(cls.graph, cls.nodes_data)
-        graph_method.find_shortest_path(cls.graph, cls.nodes_data)
+        GraphMethod.depth_first_search(cls.graph, cls.nodes_data)
+        #graph_method.find_shortest_path(cls.graph)
