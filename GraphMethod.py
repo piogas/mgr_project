@@ -6,12 +6,11 @@ import scipy.stats
 import numpy as np
 import csv
 import concurrent.futures
-from Queue import Queue
+import multiprocessing
 
 class GraphMethod:
 
 
-    results = Queue()
 
     @classmethod
     def __init__(cls):
@@ -75,20 +74,23 @@ class GraphMethod:
     @classmethod
     def depth_first_search(cls, G, nodes_data):
         start_time = time.time()
-
+        manager = multiprocessing.Manager()
+        q = manager.Queue()
         nodes = G.node
 
-        with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
-            future_to_file = dict((executor.submit(calculate, node, G, nodes_data, cls), node) for node in nodes)
+        with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
+            future_to_file = dict((executor.submit(calculate, node, G, nodes_data, cls, q), node) for node in nodes)
             for future in concurrent.futures.as_completed(future_to_file):
                 f = future_to_file[future]
                 if future.exception() is not None:
                     print('%r generated an exception: %s' % (f, future.exception()))
+
             with open('results_with_entropy.csv', 'wb') as csvfile:
+                print "Zapis do pliku"
                 writer = csv.writer(csvfile)
                 writer.writerow(['Node_1', 'Node_2', 'Entropy_sum'])
-                for result in iter(cls.results.get, None):
-                    writer.writerow(result)
+                while not q.empty():
+                    writer.writerow(q.get())
 
             print("--- %s seconds ---" % (time.time() - start_time))
 
@@ -114,7 +116,7 @@ class GraphMethod:
         return distance
 
 
-def calculate(i, G, nodes_data, graphmethod):
+def calculate(i, G, nodes_data, graphmethod, q):
 
     for j in G.node:
         if j not in G.neighbors(i):
@@ -125,7 +127,7 @@ def calculate(i, G, nodes_data, graphmethod):
             entropy_sum = graphmethod.find_shortest_path(G_temp)
             graphmethod.set_edges_weight(G_temp, entropy_sum)
             new_network_sum = graphmethod.dijkstra_weight(G_temp)
-            print [i, j, new_network_sum]
-
-            graphmethod.results.put([i, j, new_network_sum])
-
+            #print [i, j, new_network_sum]
+            result = (i, j, new_network_sum)
+            q.put(result)
+            print 90506 - q.qsize()

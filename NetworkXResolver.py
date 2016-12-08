@@ -1,7 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import math
-from project.GraphMethod import GraphMethod
+from GraphMethod import GraphMethod
 import numpy as np
 import scipy.stats
 
