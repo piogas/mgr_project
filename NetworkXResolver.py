@@ -25,6 +25,8 @@ class NetworkXResolver:
     dict_length_range_label = ['0-0.5km', '0.5-1km', '1-1.5km', '1.5-2km', '2-2.5km', '2.5-3km', '3-3.5km', '3.5-4km',
                                '4-4.5km', '4.5-5km', '5-5.5km', '>5.5km']
 
+    colors = range(20)
+
     @classmethod
     def __init__(cls):
         print 'Calling constructor'
@@ -47,8 +49,7 @@ class NetworkXResolver:
         for _ in cls.graph.nodes():
             values.append(0.25)
         nx.draw_networkx_nodes(cls.graph, pos, cmap=plt.get_cmap('jet'), node_color=values, node_size=10)
-        edges = cls._share_on_the_type(cls.edges_table)
-        cls._draw_edges(cls.graph, pos, edges)
+        cls._draw_edges(cls.graph, pos, cls.edges_table)
         cls._set_edges_levels()
 
     @classmethod
@@ -71,25 +72,11 @@ class NetworkXResolver:
         return {'string_edges': string_edges, 'string_nodes': string_nodes}
 
     @classmethod
-    def _share_on_the_type(cls, edges_table):
-        blue_edges = []
-        red_edges = []
-        green_edges = []
-        for edge in edges_table:
-            #if edge[2]['layer'] == 1:
-            #    green_edges.append(edge)
-            #if edge[2]['layer'] == 2:
-            #    red_edges.append(edge)
-            #if edge[2]['layer'] == 3:
-                blue_edges.append(edge)
-
-        return {'blue_edges': blue_edges, 'red_edges': red_edges, 'green_edges': green_edges}
-
-    @classmethod
     def _draw_edges(cls, graph, pos, edges):
-        nx.draw_networkx_edges(graph, pos, edgelist=edges['red_edges'], edge_color='r', arrows=False)
-        nx.draw_networkx_edges(graph, pos, edgelist=edges['green_edges'], edge_color='g', arrows=False)
-        nx.draw_networkx_edges(graph, pos, edgelist=edges['blue_edges'], edge_color='b', arrows=False)
+        nx.draw_networkx_edges(graph, pos, edgelist=edges, arrows=False, edge_cmap=plt.cm.datad)
+        edges, weights = zip(*nx.get_edge_attributes(cls.graph, 'layer').items())
+        nx.draw(cls.graph, pos, node_color='b', edgelist=edges, arrows=False, edge_color=weights, node_size=1,
+                width=3.0, edge_cmap=plt.cm.RdYlBu)
 
     @classmethod
     def _read_from_file(cls, uri_to_file):
