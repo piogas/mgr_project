@@ -18,6 +18,7 @@ class NetworkXResolver:
     edges_path = ''
     # resources/london_transport_nodes.txt
     nodes_path = ''
+    lines = {}
     graph = nx.Graph()
     poly1d = {}
 
@@ -96,6 +97,14 @@ class NetworkXResolver:
         string_data = string_data.split()
         edges = []
         for i in range(0, len(string_data), 4):
+            if string_data[i + 2] in cls.lines:
+                cls.lines[string_data[i + 2]].append((string_data[i]))
+                cls.lines[string_data[i + 2]].append((string_data[i + 1]))
+            else:
+                cls.lines[string_data[i + 2]] = []
+                cls.lines[string_data[i + 2]].append((string_data[i]))
+                cls.lines[string_data[i + 2]].append((string_data[i + 1]))
+
             edges.append((string_data[i], string_data[i + 1],
                           {'weight': int(string_data[i + 3]), 'layer': int(string_data[i + 2]), 'length': {}}))
         return edges
