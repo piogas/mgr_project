@@ -42,6 +42,7 @@ class NetworkXResolver:
         string_data = cls._upload_data_from_file(cls.edges_path, cls.nodes_path)
         cls.edges_table = cls._create_edges_from_string(string_data['string_edges'])
         cls.nodes_data = cls._create_nodes_from_string(string_data['string_nodes'])
+        #print cls.nodes_data
         fixed_nodes = cls.nodes_data.keys()
         cls.graph = cls._create_graph(cls.edges_table)
         cls._set_nodes_levels()
@@ -94,8 +95,9 @@ class NetworkXResolver:
 
     @classmethod
     def _create_edges_from_string(cls, string_data):
-        string_data = string_data.split()
+        string_data = string_data.split(";")
         edges = []
+        print string_data
         for i in range(0, len(string_data), 4):
             if string_data[i + 2] in cls.lines:
                 cls.lines[string_data[i + 2]].append((string_data[i]))
@@ -111,11 +113,11 @@ class NetworkXResolver:
 
     @classmethod
     def _create_nodes_from_string(cls, string_data):
-        string_data = string_data.split(",")
+        string_data = string_data.split(";")
         nodes = {}
-        for i in range(0, len(string_data), 8):
+        for i in range(0, len(string_data), 6):
             # long lat
-            node_data = (float(string_data[i + 2]), float(string_data[i + 1]))
+            node_data = (float(string_data[i + 4]), float(string_data[i + 5]))
             nodes[string_data[i]] = node_data
         return nodes
 
