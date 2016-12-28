@@ -4,6 +4,10 @@ import math
 from GraphMethod import GraphMethod
 import numpy as np
 import scipy.stats
+import copy
+import multiprocessing
+from sumproduct import Variable, Factor, FactorGraph
+import propagate as prop
 
 
 
@@ -14,6 +18,7 @@ class NetworkXResolver:
 
     edges_table = []
     nodes_data = {}
+    entry_exit = {}
     # resources/london_transport_multiplex.edges
     edges_path = ''
     # resources/london_transport_nodes.txt
@@ -42,7 +47,6 @@ class NetworkXResolver:
         string_data = cls._upload_data_from_file(cls.edges_path, cls.nodes_path)
         cls.edges_table = cls._create_edges_from_string(string_data['string_edges'])
         cls.nodes_data = cls._create_nodes_from_string(string_data['string_nodes'])
-        #print cls.nodes_data
         fixed_nodes = cls.nodes_data.keys()
         cls.graph = cls._create_graph(cls.edges_table)
         cls._set_nodes_levels()
@@ -58,6 +62,51 @@ class NetworkXResolver:
     def _set_nodes_levels(cls):
         for i in cls.graph.node:
             cls.graph.node[i]['popularity'] = len(cls.graph.neighbors(i))
+            cls.graph.node[i]['entry'] = cls.entry_exit[i][0]
+            cls.graph.node[i]['exit'] = cls.entry_exit[i][1]
+
+    @classmethod
+    def compute_edge_weight(cls):
+        cls.graph
+        start_node = 0
+        copy_graph = copy.deepcopy(cls.graph)
+        print cls.graph.edges(data=False)
+        copy_graph.remove_edges_from(cls.graph.edges(data=False))
+        print copy_graph.edge
+        for node in copy_graph.node:
+            if copy_graph.node[node]['popularity'] == 1:
+                start_node = node
+                break
+
+        current_node = start_node
+        cls.bfs(copy_graph, start_node)
+
+        print start_node
+        print copy_graph.edge
+        print cls.graph.node['11']
+
+
+    @classmethod
+    def bfs(cls, graph, start_node):
+        visited = [False] * 368
+        manager = multiprocessing.Manager()
+        queue = manager.Queue()
+        u = {}
+        i = 0
+        queue.put(int(start_node))
+        visited[int(start_node)] = True
+
+        while queue.qsize() != 0:
+            v = queue.get()
+            i += 1
+            print i
+            #tutaj cos robimy dla wierzcholka
+
+            for neighbor in cls.graph.neighbors(str(v)):
+                if not visited[int(neighbor)]:
+                    queue.put(int(neighbor))
+                    visited[int(neighbor)] = True
+
 
     @classmethod
     def _set_edges_levels(cls):
@@ -97,7 +146,6 @@ class NetworkXResolver:
     def _create_edges_from_string(cls, string_data):
         string_data = string_data.split(";")
         edges = []
-        print string_data
         for i in range(0, len(string_data), 4):
             if string_data[i + 2] in cls.lines:
                 cls.lines[string_data[i + 2]].append((string_data[i]))
@@ -117,8 +165,10 @@ class NetworkXResolver:
         nodes = {}
         for i in range(0, len(string_data), 6):
             # long lat
+            entry_exit = (float(string_data[i + 2]), float(string_data[i + 3]))
             node_data = (float(string_data[i + 4]), float(string_data[i + 5]))
             nodes[string_data[i]] = node_data
+            cls.entry_exit[string_data[i]] = entry_exit
         return nodes
 
     @classmethod
@@ -186,7 +236,6 @@ class NetworkXResolver:
     def show_km_by_quantity_plot(cls):
         x = cls.dict_length_range.keys()
         fig = plt.figure()
-        # print cls.dict_length_range.values()
         plt.plot(x, cls.dict_length_range.values())
         plt.grid()
         plt.xticks(x, cls.dict_length_range_label, rotation=30)
