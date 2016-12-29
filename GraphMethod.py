@@ -152,7 +152,7 @@ class GraphMethod:
         neighbors = graph.neighbors(str(current_node))
         init_weight = graph.node[str(current_node)]['entry']/len(neighbors)
         for neighbor in neighbors:
-            graph.edge[str(current_node)][neighbor]['travelers'] = init_weight
+            graph.edge[str(current_node)][neighbor]['travelers'] = float("{0:.2f}".format(init_weight))
 
     @classmethod
     def check_weight(cls, current_node, graph):
@@ -162,8 +162,9 @@ class GraphMethod:
             if str(current_node) in graph.edge[edge]:
                 travelers += graph.edge[edge][str(current_node)]['travelers']
                 graph.edge[edge][str(current_node)]['weight'] = \
+                    float("{0:.2f}".format(
                     graph.edge[edge][str(current_node)]['travelers'] * \
-                    graph.edge[edge][str(current_node)]['travel_time']
+                    graph.edge[edge][str(current_node)]['travel_time']))
                 i += 1
 
         if travelers > graph.node[str(current_node)]['exit']:

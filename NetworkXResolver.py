@@ -19,6 +19,7 @@ class NetworkXResolver:
     edges_table = []
     nodes_data = {}
     entry_exit = {}
+    pos = {}
 
     test = 1
     # resources/london_transport_multiplex.edges
@@ -26,7 +27,7 @@ class NetworkXResolver:
     # resources/london_transport_nodes.txt
     nodes_path = ''
     lines = {}
-    graph = nx.Graph()
+    graph = nx.MultiGraph()
     poly1d = {}
 
     dict_length_range = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0}
@@ -52,12 +53,12 @@ class NetworkXResolver:
         fixed_nodes = cls.nodes_data.keys()
         cls.graph = cls._create_graph(cls.edges_table)
         cls._set_nodes_levels()
-        pos = nx.spring_layout(cls.graph, pos=cls.nodes_data, fixed=fixed_nodes)
+        cls.pos = nx.spring_layout(cls.graph, pos=cls.nodes_data, fixed=fixed_nodes)
         values = []
         for _ in cls.graph.nodes():
             values.append(0.25)
-        nx.draw_networkx_nodes(cls.graph, pos, cmap=plt.get_cmap('jet'), node_color=values, node_size=10)
-        cls._draw_edges(cls.graph, pos, cls.edges_table)
+        cls._draw_edges(cls.graph, cls.pos, cls.edges_table)
+        nx.draw_networkx_nodes(cls.graph, cls.pos, cmap=plt.get_cmap('jet'), node_color=values, node_size=10)
         cls._set_edges_levels()
 
     @classmethod
@@ -66,6 +67,7 @@ class NetworkXResolver:
             cls.graph.node[i]['popularity'] = len(cls.graph.neighbors(i))
             cls.graph.node[i]['entry'] = cls.entry_exit[i][0]
             cls.graph.node[i]['exit'] = cls.entry_exit[i][1]
+            cls.graph.node[i]['pos'] = str(cls.nodes_data[i][0]*300) + ',' + str(cls.nodes_data[i][1]*300) + '!'
 
     @classmethod
     def _set_edges_levels(cls):
@@ -246,5 +248,9 @@ class NetworkXResolver:
         cls.graph.edge
         graph_method = GraphMethod()
         graph_method.compute_edge_weight(cls.graph)
+        labels = nx.get_edge_attributes(cls.graph, 'travelers')
+        nx.draw_networkx_edge_labels(cls.graph, cls.pos, edge_labels=labels)
+        node_labels = nx.get_node_attributes(cls.graph, 'entry')
+        nx.draw_networkx_labels(cls.graph, cls.pos, labels = node_labels)
         #graph_method.depth_first_search(cls.graph, cls.nodes_data)
         #graph_method.find_shortest_path(cls.graph)
