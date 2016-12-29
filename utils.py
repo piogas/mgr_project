@@ -132,3 +132,8 @@ def create_exit_entry_from_string(string_data):
         node_data = [float(string_data[i + 10]), float(string_data[i + 11])]
         stations[string_data[i]] = node_data
     return stations
+
+
+def save_to_file(uri_to_file, data):
+    with open(uri_to_file, 'w') as content_file:
+        content_file.write(str(data))

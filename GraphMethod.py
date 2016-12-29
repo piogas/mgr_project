@@ -7,6 +7,7 @@ import numpy as np
 import csv
 import concurrent.futures
 import multiprocessing
+import utils
 
 
 class GraphMethod:
@@ -177,6 +178,54 @@ class GraphMethod:
 
             cls.test += 1
 
+    @classmethod
+    def _normalize(cls, matrix):
+        return matrix/matrix.sum(axis=0)
+
+    @classmethod
+    def _denormalize(cls, matrix, matrix_sum):
+        return matrix * matrix_sum
+
+    @classmethod
+    def _create_edge_matrix(cls, graph):
+        matrix = np.empty((303, 303))
+        matrix.fill(0.)
+        for edge_start in graph.edge:
+            for edge_stop in graph.edge[edge_start]:
+                matrix[int(edge_start)][int(edge_stop)] = 1
+        return matrix
+
+    @classmethod
+    def _create_node_matrix(cls, graph):
+        matrix = np.empty((303, 2))
+        matrix.fill(0.)
+        for node in graph.node:
+            matrix[int(node)][0] = graph.node[node]['entry']
+            matrix[int(node)][1] = graph.node[node]['exit']
+        return matrix
+
+    @classmethod
+    def compute_belief_propagation(cls, graph):
+        #        np.set_printoptions(precision=4)
+        np.set_printoptions(suppress=True)
+        edge_matrix = cls._create_edge_matrix(graph)
+        node_matrix = cls._create_node_matrix(graph)
+        matrix_sum = node_matrix.sum(axis=0)
+        utils.save_to_file('Wyniki/started_value.csv', node_matrix)
+        print matrix_sum
+
+        for i in range(100):
+            x_old = node_matrix[1][0]
+            node_matrix = np.dot(edge_matrix, node_matrix)
+            node_matrix = cls._normalize(node_matrix)
+            x_new = node_matrix[1][0]
+            #if abs((x_new - x_old)/x_old) < 0.005:
+            #   break
+
+        denormalized = cls._denormalize(node_matrix, matrix_sum)
+        print denormalized
+        utils.save_to_file('Wyniki/denormalized.csv', denormalized)
+        utils.save_to_file('Wyniki/normalized.csv', node_matrix)
 
 
 def calculate(i, graph, nodes_data, graphmethod, q):
