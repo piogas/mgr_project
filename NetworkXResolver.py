@@ -19,6 +19,8 @@ class NetworkXResolver:
     edges_table = []
     nodes_data = {}
     entry_exit = {}
+
+    test = 1
     # resources/london_transport_multiplex.edges
     edges_path = ''
     # resources/london_transport_nodes.txt
@@ -64,49 +66,6 @@ class NetworkXResolver:
             cls.graph.node[i]['popularity'] = len(cls.graph.neighbors(i))
             cls.graph.node[i]['entry'] = cls.entry_exit[i][0]
             cls.graph.node[i]['exit'] = cls.entry_exit[i][1]
-
-    @classmethod
-    def compute_edge_weight(cls):
-        cls.graph
-        start_node = 0
-        copy_graph = copy.deepcopy(cls.graph)
-        print cls.graph.edges(data=False)
-        copy_graph.remove_edges_from(cls.graph.edges(data=False))
-        print copy_graph.edge
-        for node in copy_graph.node:
-            if copy_graph.node[node]['popularity'] == 1:
-                start_node = node
-                break
-
-        current_node = start_node
-        cls.bfs(copy_graph, start_node)
-
-        print start_node
-        print copy_graph.edge
-        print cls.graph.node['11']
-
-
-    @classmethod
-    def bfs(cls, graph, start_node):
-        visited = [False] * 368
-        manager = multiprocessing.Manager()
-        queue = manager.Queue()
-        u = {}
-        i = 0
-        queue.put(int(start_node))
-        visited[int(start_node)] = True
-
-        while queue.qsize() != 0:
-            v = queue.get()
-            i += 1
-            print i
-            #tutaj cos robimy dla wierzcholka
-
-            for neighbor in cls.graph.neighbors(str(v)):
-                if not visited[int(neighbor)]:
-                    queue.put(int(neighbor))
-                    visited[int(neighbor)] = True
-
 
     @classmethod
     def _set_edges_levels(cls):
@@ -156,7 +115,8 @@ class NetworkXResolver:
                 cls.lines[string_data[i + 2]].append((string_data[i + 1]))
 
             edges.append((string_data[i], string_data[i + 1],
-                          {'weight': int(string_data[i + 3]), 'layer': int(string_data[i + 2]), 'length': {}}))
+                          {'weight': int(string_data[i + 3]), 'travel_time': int(string_data[i + 3]),
+                           'layer': int(string_data[i + 2]), 'length': {}}))
         return edges
 
     @classmethod
@@ -285,5 +245,6 @@ class NetworkXResolver:
     def get_dijkstra_result(cls):
         cls.graph.edge
         graph_method = GraphMethod()
-        graph_method.depth_first_search(cls.graph, cls.nodes_data)
+        graph_method.compute_edge_weight(cls.graph)
+        #graph_method.depth_first_search(cls.graph, cls.nodes_data)
         #graph_method.find_shortest_path(cls.graph)
