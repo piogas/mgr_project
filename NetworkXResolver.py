@@ -247,10 +247,11 @@ class NetworkXResolver:
     def get_dijkstra_result(cls):
         cls.graph.edge
         graph_method = GraphMethod()
-        graph_method.compute_belief_propagation(cls.graph)
+        #graph_method.compute_belief_propagation(cls.graph)
+        #graph_method.find_shortest_path_travelers(cls.graph)
         # labels = nx.get_edge_attributes(cls.graph, 'travelers')
         # nx.draw_networkx_edge_labels(cls.graph, cls.pos, edge_labels=labels)
         # node_labels = nx.get_node_attributes(cls.graph, 'entry')
         # nx.draw_networkx_labels(cls.graph, cls.pos, labels = node_labels)
-        #graph_method.depth_first_search(cls.graph, cls.nodes_data)
+        graph_method.depth_first_search(cls.graph, cls.nodes_data)
         #graph_method.find_shortest_path(cls.graph)

@@ -10,6 +10,10 @@ import multiprocessing
 import utils
 
 
+test_type = 'travelers'
+# test_type = 'entropy'
+
+
 class GraphMethod:
 
     test = 0
@@ -33,7 +37,7 @@ class GraphMethod:
         return sum_all_paths
 
     @classmethod
-    def find_shortest_path(cls, graph):
+    def find_shortest_path_entropy(cls, graph):
         entropy_sum = 0
         for x in graph.node:
             paths = nx.single_source_dijkstra_path(graph, x)
@@ -56,6 +60,20 @@ class GraphMethod:
             entropy_sum += graph.node[x]['entropy_sum']
 
         return entropy_sum
+
+    @classmethod
+    def find_shortest_path_travelers(cls, graph):
+        travelers_sum = 0
+        for x in graph.node:
+            paths = nx.single_source_dijkstra_path(graph, x)
+            length = nx.single_source_dijkstra_path_length(graph, x)
+            for path in paths:
+                entry_exits = 0
+                for node in paths[path]:
+                    entry_exits += graph.node[node]['entry_exit']
+                travelers_sum += entry_exits * length[path]
+
+        return travelers_sum
 
     @classmethod
     def set_edges_weight(cls, graph, entropy_sum):
@@ -87,10 +105,10 @@ class GraphMethod:
                 if future.exception() is not None:
                     print('%r generated an exception: %s' % (f, future.exception()))
 
-            with open('results_with_entropy.csv', 'wb') as csvfile:
+            with open('results_with_' + test_type + '.csv', 'wb') as csvfile:
                 print "Zapis do pliku"
                 writer = csv.writer(csvfile)
-                writer.writerow(['Node_1', 'Node_2', 'Entropy_sum'])
+                writer.writerow(['Node_1', 'Node_2', test_type + '_sum'])
                 while not q.empty():
                     writer.writerow(q.get())
 
@@ -205,41 +223,49 @@ class GraphMethod:
         return matrix
 
     @classmethod
+    def _set_new_value_to_nodes(cls, graph, new_value):
+        for node in graph.node:
+            graph.node[node]['entry_exit'] = new_value[int(node)][0] + new_value[int(node)][1]
+
+    @classmethod
     def compute_belief_propagation(cls, graph):
-        #        np.set_printoptions(precision=4)
         np.set_printoptions(suppress=True)
         edge_matrix = cls._create_edge_matrix(graph)
         node_matrix = cls._create_node_matrix(graph)
         matrix_sum = node_matrix.sum(axis=0)
-        utils.save_to_file('Wyniki/started_value.csv', node_matrix)
-        print matrix_sum
+        #utils.save_to_file('Wyniki/started_value.csv', node_matrix)
 
         for i in range(100):
             x_old = node_matrix[1][0]
             node_matrix = np.dot(edge_matrix, node_matrix)
             node_matrix = cls._normalize(node_matrix)
             x_new = node_matrix[1][0]
-            #if abs((x_new - x_old)/x_old) < 0.005:
-            #   break
+            if abs((x_new - x_old)/x_old) < 0.0000005:
+                break
 
         denormalized = cls._denormalize(node_matrix, matrix_sum)
-        print denormalized
-        utils.save_to_file('Wyniki/denormalized.csv', denormalized)
-        utils.save_to_file('Wyniki/normalized.csv', node_matrix)
+        cls._set_new_value_to_nodes(graph, node_matrix)
+        #utils.save_to_file('Wyniki/denormalized.csv', denormalized)
+        #utils.save_to_file('Wyniki/normalized.csv', node_matrix)
 
 
 def calculate(i, graph, nodes_data, graphmethod, q):
-
+    new_network_sum = 0
     for j in graph.node:
         if j not in graph.neighbors(i):
-            G_temp = copy.deepcopy(graph)
+            graph_temp = copy.deepcopy(graph)
             dist = graphmethod.calculate_edge_length(i, j, nodes_data)
-            G_temp.add_edge(i, j, weight=dist)
-            G_temp.add_edge(j, i, weight=dist)
-            entropy_sum = graphmethod.find_shortest_path(G_temp)
-            graphmethod.set_edges_weight(G_temp, entropy_sum)
-            new_network_sum = graphmethod.dijkstra_weight(G_temp)
-            #print [i, j, new_network_sum]
+            graph_temp.add_edge(i, j, weight=dist)
+            graph_temp.add_edge(j, i, weight=dist)
+
+            if test_type == 'travelers':
+                graphmethod.compute_belief_propagation(graph_temp)
+                new_network_sum = graphmethod.find_shortest_path_travelers(graph_temp)
+            elif test_type == 'entropy':
+                entropy_sum = graphmethod.find_shortest_path_entropy(graph_temp)
+                graphmethod.set_edges_weight(graph_temp, entropy_sum)
+                new_network_sum = graphmethod.dijkstra_weight(graph_temp)
+
             result = (i, j, new_network_sum)
             q.put(result)
             print 90506 - q.qsize()
