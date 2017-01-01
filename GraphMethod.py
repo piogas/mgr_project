@@ -10,8 +10,9 @@ import multiprocessing
 import utils
 
 
-test_type = 'travelers'
-# test_type = 'entropy'
+test_type = 'time'
+#test_type = 'travelers'
+#test_type = 'entropy'
 
 
 class GraphMethod:
@@ -33,7 +34,8 @@ class GraphMethod:
     def dijkstra_entropy(cls, graph):
         sum_all_paths = 0
         for x in graph.node:
-            sum_all_paths += cls._calculate_paths_sum(nx.single_source_dijkstra_path_length(graph, x, weight='entropy_sum'))
+            sum_all_paths += cls._calculate_paths_sum(nx.single_source_dijkstra_path_length(graph, x,
+                                                                                            weight='entropy_sum'))
         return sum_all_paths
 
     @classmethod
@@ -55,9 +57,7 @@ class GraphMethod:
                         graph.node[node]['betweeness'] = 1
                     else:
                         graph.node[node]['betweeness'] += 1
-
-        for x in graph.node:
-            entropy_sum += graph.node[x]['entropy_sum']
+                    entropy_sum += entropy
 
         return entropy_sum
 
@@ -72,8 +72,6 @@ class GraphMethod:
                 for node in paths[path]:
                     entry_exits += graph.node[node]['entry_exit']
                 travelers_sum += entry_exits * length[path]
-
-        return travelers_sum
 
     @classmethod
     def set_edges_weight(cls, graph, entropy_sum):
@@ -105,7 +103,7 @@ class GraphMethod:
                 if future.exception() is not None:
                     print('%r generated an exception: %s' % (f, future.exception()))
 
-            with open('results_with_' + test_type + '.csv', 'wb') as csvfile:
+            with open('Wyniki\\results_with_' + test_type + '.csv', 'wb') as csvfile:
                 print "Zapis do pliku"
                 writer = csv.writer(csvfile)
                 writer.writerow(['Node_1', 'Node_2', test_type + '_sum'])
@@ -261,11 +259,13 @@ def calculate(i, graph, nodes_data, graphmethod, q):
             if test_type == 'travelers':
                 graphmethod.compute_belief_propagation(graph_temp)
                 new_network_sum = graphmethod.find_shortest_path_travelers(graph_temp)
+            elif test_type == 'time':
+                new_network_sum = graphmethod.dijkstra_weight(graph_temp)
             elif test_type == 'entropy':
                 entropy_sum = graphmethod.find_shortest_path_entropy(graph_temp)
                 graphmethod.set_edges_weight(graph_temp, entropy_sum)
-                new_network_sum = graphmethod.dijkstra_weight(graph_temp)
+                new_network_sum += graphmethod.dijkstra_weight(graph_temp)
 
             result = (i, j, new_network_sum)
             q.put(result)
-            print 90506 - q.qsize()
+            print 69615 - q.qsize()
