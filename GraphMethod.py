@@ -245,9 +245,9 @@ class GraphMethod:
 
 
 def calculate(i, graph, nodes_data, graphmethod, q, poly1d, test_type):
-    new_network_sum = 0
     for j in graph.node:
         if j not in graph.neighbors(i):
+            new_network_sum = 0
             graph_temp = copy.deepcopy(graph)
             dist = graphmethod.calculate_edge_length(i, j, nodes_data)
             graph_temp.add_edge(i, j, weight=poly1d(dist))
@@ -263,7 +263,7 @@ def calculate(i, graph, nodes_data, graphmethod, q, poly1d, test_type):
                     graph_temp.node[i]['popularity'] = len(graph_temp.neighbors(i))
                 entropy_sum = graphmethod.find_shortest_path_entropy(graph_temp)
                 graphmethod.set_edges_weight(graph_temp, entropy_sum)
-                new_network_sum += graphmethod.dijkstra_weight(graph_temp)
+                new_network_sum = graphmethod.dijkstra_weight(graph_temp)
 
             result = (i, j, new_network_sum)
             q.put(result)
