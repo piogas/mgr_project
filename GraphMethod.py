@@ -10,15 +10,12 @@ import multiprocessing
 import utils
 
 
-test_type = 'time'
-#test_type = 'travelers'
-#test_type = 'entropy'
+
 
 
 class GraphMethod:
 
     test = 0
-
     @classmethod
     def __init__(cls):
         print 'Init GraphMethod'
@@ -72,7 +69,7 @@ class GraphMethod:
                 for node in paths[path]:
                     entry_exits += graph.node[node]['entry_exit']
                 travelers_sum += entry_exits * length[path]
-
+        return travelers_sum
     @classmethod
     def set_edges_weight(cls, graph, entropy_sum):
         for i in graph.edges():
@@ -90,14 +87,14 @@ class GraphMethod:
         return paths_sum
 
     @classmethod
-    def depth_first_search(cls, graph, nodes_data):
+    def depth_first_search(cls, graph, nodes_data, poly1d, test_type):
         start_time = time.time()
         manager = multiprocessing.Manager()
         q = manager.Queue()
         nodes = graph.node
 
         with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
-            future_to_file = dict((executor.submit(calculate, node, graph, nodes_data, cls, q), node) for node in nodes)
+            future_to_file = dict((executor.submit(calculate, node, graph, nodes_data, cls, q, poly1d, test_type), node) for node in nodes)
             for future in concurrent.futures.as_completed(future_to_file):
                 f = future_to_file[future]
                 if future.exception() is not None:
@@ -247,14 +244,14 @@ class GraphMethod:
         #utils.save_to_file('Wyniki/normalized.csv', node_matrix)
 
 
-def calculate(i, graph, nodes_data, graphmethod, q):
+def calculate(i, graph, nodes_data, graphmethod, q, poly1d, test_type):
     new_network_sum = 0
     for j in graph.node:
         if j not in graph.neighbors(i):
             graph_temp = copy.deepcopy(graph)
             dist = graphmethod.calculate_edge_length(i, j, nodes_data)
-            graph_temp.add_edge(i, j, weight=dist)
-            graph_temp.add_edge(j, i, weight=dist)
+            graph_temp.add_edge(i, j, weight=poly1d(dist))
+            graph_temp.add_edge(j, i, weight=poly1d(dist))
 
             if test_type == 'travelers':
                 graphmethod.compute_belief_propagation(graph_temp)
@@ -262,6 +259,8 @@ def calculate(i, graph, nodes_data, graphmethod, q):
             elif test_type == 'time':
                 new_network_sum = graphmethod.dijkstra_weight(graph_temp)
             elif test_type == 'entropy':
+                for i in graph_temp.node:
+                    graph_temp.node[i]['popularity'] = len(graph_temp.neighbors(i))
                 entropy_sum = graphmethod.find_shortest_path_entropy(graph_temp)
                 graphmethod.set_edges_weight(graph_temp, entropy_sum)
                 new_network_sum += graphmethod.dijkstra_weight(graph_temp)

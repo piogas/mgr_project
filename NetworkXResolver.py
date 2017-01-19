@@ -1,9 +1,17 @@
+# -*- coding: CP1250 -*-
+
 import networkx as nx
 import matplotlib.pyplot as plt
 import math
 from GraphMethod import GraphMethod
 import numpy as np
 import scipy.stats
+import pylab
+import sys
+
+pylab.rc('text', usetex=True)
+pylab.rc('text.latex',unicode=True)
+pylab.rc('text.latex',preamble='\usepackage[T1]{polski}')
 import copy
 import multiprocessing
 from sumproduct import Variable, Factor, FactorGraph
@@ -15,6 +23,8 @@ __author__ = 'piogas'
 
 
 class NetworkXResolver:
+
+    test_type = 'time'
 
     edges_table = []
     nodes_data = {}
@@ -30,6 +40,7 @@ class NetworkXResolver:
     graph = nx.MultiGraph()
     poly1d = {}
 
+
     dict_length_range = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0}
     dict_length_range_label = ['0-0.5km', '0.5-1km', '1-1.5km', '1.5-2km', '2-2.5km', '2.5-3km', '3-3.5km', '3.5-4km',
                                '4-4.5km', '4.5-5km', '5-5.5km', '>5.5km']
@@ -39,6 +50,15 @@ class NetworkXResolver:
     @classmethod
     def __init__(cls):
         print 'Calling constructor'
+        print sys.argv[1]
+        if sys.argv[1] == 't':
+            cls.test_type = 'time' #t - arg
+        if sys.argv[1] == 'tr':
+            cls.test_type = 'travelers' #tr - arc
+        if sys.argv[1] == 'e':
+            cls.test_type = 'entropy'#e - arc
+
+        print cls.test_type
 
     @classmethod
     def init_path(cls, edges_path, nodes_path):
@@ -214,23 +234,27 @@ class NetworkXResolver:
         fig = plt.figure()
         plt.plot(x, y, 'ro')
         plt.grid()
-        fig.suptitle('Edge length by time travel', fontsize=20)
-        plt.ylabel('Time travel', fontsize=18)
-        plt.xlabel('Edge length', fontsize=16)
+        fig.suptitle(u'Wykres czasu przejazdu do dugoœci po³¹czenia', fontsize=20)
+        plt.ylabel('Czas przejazdu [s]', fontsize=18)
+        plt.xlabel(u'Dugoœæ po³¹czenia [km]', fontsize=16)
 
-        cls._get_approximation_for_graph(x, y)
+        cls._get_approximation_for_graph()
         fig.savefig('km_time.png')
 
     @classmethod
-    def _get_approximation_for_graph(cls, x, y):
+    def _get_approximation_for_graph(cls):
+        length_and_time = np.array(cls._get_all_length_and_time())
+        x = length_and_time[:, 0]
+        y = length_and_time[:, 1]
         xz = np.array(x)
         yz = np.array(y)
         z = np.polyfit(xz, yz, 3)
-        poly1d = np.poly1d(z)
+        cls.poly1d = np.poly1d(z)
+        print(np.poly1d(cls.poly1d))
         app_x = []
         app_y = []
         for i in range(0, 13):
-            app_y.append(poly1d(i))
+            app_y.append(cls.poly1d(i))
             app_x.append(i)
 
         plt.plot(app_x, app_y, '--')
@@ -246,12 +270,13 @@ class NetworkXResolver:
     @classmethod
     def get_dijkstra_result(cls):
         cls.graph.edge
+        cls._get_approximation_for_graph()
         graph_method = GraphMethod()
-        #graph_method.compute_belief_propagation(cls.graph)
+        graph_method.compute_belief_propagation(cls.graph)
         #graph_method.find_shortest_path_travelers(cls.graph)
         # labels = nx.get_edge_attributes(cls.graph, 'travelers')
         # nx.draw_networkx_edge_labels(cls.graph, cls.pos, edge_labels=labels)
         # node_labels = nx.get_node_attributes(cls.graph, 'entry')
         # nx.draw_networkx_labels(cls.graph, cls.pos, labels = node_labels)
-        graph_method.depth_first_search(cls.graph, cls.nodes_data)
+        graph_method.depth_first_search(cls.graph, cls.nodes_data, cls.poly1d, cls.test_type)
         #graph_method.find_shortest_path(cls.graph)

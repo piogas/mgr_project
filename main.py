@@ -14,9 +14,9 @@ if __name__ == '__main__':
     networkX.draw_graph()
     networkX.calculate_all_edges_length()
     networkX.get_dijkstra_result()
-    write_dot(networkX.graph, 'multi.dot')
+    #write_dot(networkX.graph, 'multi.dot')
     #networkX.show_km_by_quantity_plot()
     #networkX.show_km_by_time_plot()
-    plt.show()
+    #plt.show()
 
 
