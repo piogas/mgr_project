@@ -93,7 +93,7 @@ class GraphMethod:
         q = manager.Queue()
         nodes = graph.node
 
-        with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=3) as executor:
             future_to_file = dict((executor.submit(calculate, node, graph, nodes_data, cls, q, poly1d, test_type), node) for node in nodes)
             for future in concurrent.futures.as_completed(future_to_file):
                 f = future_to_file[future]
@@ -259,8 +259,8 @@ def calculate(i, graph, nodes_data, graphmethod, q, poly1d, test_type):
             elif test_type == 'time':
                 new_network_sum = graphmethod.dijkstra_weight(graph_temp)
             elif test_type == 'entropy':
-                for i in graph_temp.node:
-                    graph_temp.node[i]['popularity'] = len(graph_temp.neighbors(i))
+                for k in graph_temp.node:
+                    graph_temp.node[k]['popularity'] = len(graph_temp.neighbors(k))
                 entropy_sum = graphmethod.find_shortest_path_entropy(graph_temp)
                 graphmethod.set_edges_weight(graph_temp, entropy_sum)
                 new_network_sum = graphmethod.dijkstra_weight(graph_temp)
