@@ -13,10 +13,10 @@ if __name__ == '__main__':
     networkX.init_path('resources_with_time/merged/lines.csv', 'resources_with_time/merged/stations.csv')
     networkX.draw_graph()
     networkX.calculate_all_edges_length()
-    networkX.get_dijkstra_result()
+    #networkX.get_dijkstra_result()
     #write_dot(networkX.graph, 'multi.dot')
-    #networkX.show_km_by_quantity_plot()
+    networkX.show_km_by_quantity_plot()
     #networkX.show_km_by_time_plot()
-    #plt.show()
+    plt.show()
 
 

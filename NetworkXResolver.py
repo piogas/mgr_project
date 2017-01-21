@@ -42,23 +42,23 @@ class NetworkXResolver:
 
 
     dict_length_range = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0}
-    dict_length_range_label = ['0-0.5km', '0.5-1km', '1-1.5km', '1.5-2km', '2-2.5km', '2.5-3km', '3-3.5km', '3.5-4km',
-                               '4-4.5km', '4.5-5km', '5-5.5km', '>5.5km']
+    dict_length_range_label = ['0-0.5', '0.5-1', '1-1.5', '1.5-2', '2-2.5', '2.5-3', '3-3.5', '3.5-4',
+                               '4-4.5', '4.5-5', '5-5.5', '>5.5']
 
     colors = range(20)
 
     @classmethod
     def __init__(cls):
         print 'Calling constructor'
-        print sys.argv[1]
-        if sys.argv[1] == 't':
-            cls.test_type = 'time' #t - arg
-        if sys.argv[1] == 'tr':
-            cls.test_type = 'travelers' #tr - arc
-        if sys.argv[1] == 'e':
-            cls.test_type = 'entropy'#e - arc
+        if len(sys.argv) > 1:
+            if sys.argv[1] == 't':
+                cls.test_type = 'time' #t - arg
+            if sys.argv[1] == 'tr':
+                cls.test_type = 'travelers' #tr - arc
+            if sys.argv[1] == 'e':
+                cls.test_type = 'entropy'#e - arc
 
-        print cls.test_type
+        print '---- Start "' + cls.test_type + '" method ----'
 
     @classmethod
     def init_path(cls, edges_path, nodes_path):
@@ -220,10 +220,9 @@ class NetworkXResolver:
         fig = plt.figure()
         plt.plot(x, cls.dict_length_range.values())
         plt.grid()
-        plt.xticks(x, cls.dict_length_range_label, rotation=30)
-        fig.suptitle('Quantity of edges in length set', fontsize=20)
-        plt.xlabel('Edge length', fontsize=18)
-        plt.ylabel('Number of edge', fontsize=16)
+        plt.xticks(x, cls.dict_length_range_label)
+        plt.xlabel(u'D³ugoœæ po³¹czenia [km]', fontsize=18)
+        plt.ylabel(u'Iloœæ wierzcho³ków', fontsize=16)
         fig.savefig('km_quantity.png')
 
     @classmethod
@@ -234,9 +233,8 @@ class NetworkXResolver:
         fig = plt.figure()
         plt.plot(x, y, 'ro')
         plt.grid()
-        fig.suptitle(u'Wykres czasu przejazdu do dugoœci po³¹czenia', fontsize=20)
         plt.ylabel('Czas przejazdu [s]', fontsize=18)
-        plt.xlabel(u'Dugoœæ po³¹czenia [km]', fontsize=16)
+        plt.xlabel(u'D³ugoœæ po³¹czenia [km]', fontsize=16)
 
         cls._get_approximation_for_graph()
         fig.savefig('km_time.png')
