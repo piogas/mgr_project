@@ -100,7 +100,7 @@ class GraphMethod:
                 if future.exception() is not None:
                     print('%r generated an exception: %s' % (f, future.exception()))
 
-            with open('Wyniki\\results_with_' + test_type + '.csv', 'wb') as csvfile:
+            with open('Wyniki\\results_withwww_' + test_type + '.csv', 'wb') as csvfile:
                 print "Zapis do pliku"
                 writer = csv.writer(csvfile)
                 writer.writerow(['Node_1', 'Node_2', test_type + '_sum'])
@@ -239,7 +239,7 @@ class GraphMethod:
                 break
 
         denormalized = cls._denormalize(node_matrix, matrix_sum)
-        cls._set_new_value_to_nodes(graph, node_matrix)
+        cls._set_new_value_to_nodes(graph, denormalized)
         #utils.save_to_file('Wyniki/denormalized.csv', denormalized)
         #utils.save_to_file('Wyniki/normalized.csv', node_matrix)
 
@@ -247,11 +247,12 @@ class GraphMethod:
 def calculate(i, graph, nodes_data, graphmethod, q, poly1d, test_type):
     for j in graph.node:
         if j not in graph.neighbors(i):
+
             new_network_sum = 0
             graph_temp = copy.deepcopy(graph)
             dist = graphmethod.calculate_edge_length(i, j, nodes_data)
-            graph_temp.add_edge(i, j, weight=poly1d(dist))
-            graph_temp.add_edge(j, i, weight=poly1d(dist))
+           #graph_temp.add_edge(i, j, weight=poly1d(dist))
+            #graph_temp.add_edge(j, i, weight=poly1d(dist))
 
             if test_type == 'travelers':
                 graphmethod.compute_belief_propagation(graph_temp)
@@ -267,4 +268,6 @@ def calculate(i, graph, nodes_data, graphmethod, q, poly1d, test_type):
 
             result = (i, j, new_network_sum)
             q.put(result)
+            print result
             print 69615 - q.qsize()
+            break

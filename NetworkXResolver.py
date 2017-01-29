@@ -218,11 +218,16 @@ class NetworkXResolver:
     def show_km_by_quantity_plot(cls):
         x = cls.dict_length_range.keys()
         fig = plt.figure()
-        plt.plot(x, cls.dict_length_range.values())
-        plt.grid()
-        plt.xticks(x, cls.dict_length_range_label)
-        plt.xlabel(u'D³ugoœæ po³¹czenia [km]', fontsize=18)
-        plt.ylabel(u'Iloœæ wierzcho³ków', fontsize=16)
+        ax = fig.add_subplot(111)
+        width = 0.35
+        ind = np.arange(len(x))    # the x locations for the groups
+        ax.bar(x, cls.dict_length_range.values(), width)
+        ax.grid()
+        ax.set_xticks(ind + width/2.)
+        ax.set_xticklabels(cls.dict_length_range_label)
+        #ax.xticks(x, cls.dict_length_range_label)
+        ax.set_xlabel(u'D³ugoœæ po³¹czenia [km]', fontsize=18)
+        ax.set_ylabel(u'Iloœæ wierzcho³ków', fontsize=16)
         fig.savefig('km_quantity.png')
 
     @classmethod
